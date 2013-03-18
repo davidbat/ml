@@ -1,0 +1,88 @@
+Calculating DT based on entropy
+Using leaf node cutoff as -  1
+Average MSE training -  37.3099769053
+Average MSE test -  31.5864864865
+Using leaf node cutoff as -  2
+Average MSE training -  35.402852194
+Average MSE test -  28.6618243243
+Using leaf node cutoff as -  3
+Average MSE training -  34.4600352836
+Average MSE test -  26.5398423423
+Using leaf node cutoff as -  4
+Average MSE training -  33.3836853669
+Average MSE test -  23.5745016892
+Using leaf node cutoff as -  5
+Average MSE training -  33.6999239864
+Average MSE test -  23.5584760135
+Using leaf node cutoff as -  6
+Average MSE training -  33.4408047921
+Average MSE test -  21.8037378378
+Using leaf node cutoff as -  7
+Average MSE training -  32.8981324166
+Average MSE test -  21.8494474888
+Using leaf node cutoff as -  8
+Average MSE training -  33.4194843123
+Average MSE test -  22.1738748068
+Using leaf node cutoff as -  9
+Average MSE training -  34.5330241442
+Average MSE test -  21.3600476087
+
+Calculating DT based on gini
+Using leaf node cutoff as -  1
+Average MSE training -  35.2943879908
+Average MSE test -  55.3667567568
+Using leaf node cutoff as -  2
+Average MSE training -  36.1283083141
+Average MSE test -  50.1072635135
+Using leaf node cutoff as -  3
+Average MSE training -  36.8425057737
+Average MSE test -  55.258216967
+Using leaf node cutoff as -  4
+Average MSE training -  36.1647209392
+Average MSE test -  51.5109740991
+Using leaf node cutoff as -  5
+Average MSE training -  34.9728151078
+Average MSE test -  49.8409541667
+Using leaf node cutoff as -  6
+Average MSE training -  35.5215838465
+Average MSE test -  46.8912881381
+Using leaf node cutoff as -  7
+Average MSE training -  32.5444742666
+Average MSE test -  46.9692359073
+Using leaf node cutoff as -  8
+Average MSE training -  32.6876826267
+Average MSE test -  46.8087012581
+Using leaf node cutoff as -  9
+Average MSE training -  32.6767712025
+Average MSE test -  46.886867565
+
+
+Calculating DT based on MSE
+Using leaf node cutoff as -  1
+Average MSE training -  113.017608417
+Average MSE test -  110.307094595
+Using leaf node cutoff as -  2
+Average MSE training -  113.017608417
+Average MSE test -  110.307094595
+Using leaf node cutoff as -  3
+Average MSE training -  109.792746985
+Average MSE test -  101.630923423
+Using leaf node cutoff as -  4
+Average MSE training -  116.213430042
+Average MSE test -  101.260841779
+Using leaf node cutoff as -  5
+Average MSE training -  115.322547954
+Average MSE test -  100.440179617
+Using leaf node cutoff as -  6
+Average MSE training -  115.303061913
+Average MSE test -  100.979218656
+Using leaf node cutoff as -  7
+Average MSE training -  115.246828442
+Average MSE test -  100.947417601
+Using leaf node cutoff as -  8
+Average MSE training -  115.501538613
+Average MSE test -  101.701650991
+Using leaf node cutoff as -  9
+Average MSE training -  115.414235203
+Average MSE test -  101.701650991
+

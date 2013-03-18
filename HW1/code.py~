@@ -1,0 +1,198 @@
+#!/usr/bin/python
+import math
+def readfile(filename):
+  fd = open(filename)
+  features = []
+  label = []
+  for line in fd.readlines():
+    line = line.strip().split()
+    if line[len(line) - 1] not in label:
+      label.append(line[len(line) - 1])
+    features.append(map(lambda x:float(x),line))
+  return features
+
+class LeafNode:
+  left , right, data = None, None, 0
+  
+  def __init__(self, data):
+    # initializes the data members
+    self.left = None
+    self.right = None
+    self.data = data
+
+class PredicateNode:
+  left , right, feature_id, condition = None, None, 0, 0
+  
+  def __init__(self, ids, val):
+    # initializes the data members
+    self.left = None
+    self.right = None
+    self.feature_id = ids
+    self.condition = val
+
+class Tree:
+  def __init__(self):
+    # initializes the root member
+    self.root = None
+  
+  def addLeafNode(self, data):
+    # creates a new node and returns it
+    return LeafNode(data)
+
+  def addPredNode(self, feature, value):
+    # creates a new node and returns it
+    return PredicateNode(feature, value)
+
+  def insert(self, root, data):
+    # inserts a new data
+    if root == None:
+      # it there isn't any data
+      # adds it and returns
+      return self.addNode(data)
+    else:
+      # enters into the tree
+      if data <= root.data:
+        # if the data is less than the stored one
+        # goes into the left-sub-tree
+        root.left = self.insert(root.left, data)
+      else:
+        # processes the right-sub-tree
+        root.right = self.insert(root.right, data)
+      return root
+
+  def uniq_labels(self, Y):
+    uniq_Y = {}
+    for label in Y:
+      if label in uniq_Y.keys():
+        uniq_Y[label] += 1
+      else:
+        uniq_Y[label] = 1
+    return uniq_Y
+
+  def calculate_ig(self, X, split_row):
+    entropy_left = 0
+    entropy_right = 0
+    parent_entropy = 0
+    items_num = len(X)
+    right_items_num = items_num - split_row
+    Y = self.uniq_labels(map(lambda row:row[len(row)-1] ,X))
+    for label in Y.keys():
+      parent_entropy += float(Y[label]) / len(X) * math.log(len(X) / float(Y[label]))
+    #print parent_entropy, Y
+    Y = self.uniq_labels(map(lambda row:row[len(row)-1] ,X[0:split_row]))
+    for label in Y.keys():
+      entropy_left += float(Y[label]) / split_row * math.log(split_row / float(Y[label]))
+    #print entropy_left, Y
+    Y = self.uniq_labels(map(lambda row:row[len(row)-1] ,X[split_row:]))
+    for label in Y.keys():
+      entropy_right += float(Y[label]) / right_items_num * math.log(right_items_num / float(Y[label]))
+    #print entropy_right, Y
+    IG = float(split_row) / items_num * (parent_entropy - entropy_left) + float(items_num - split_row) /items_num * (parent_entropy - entropy_right)
+    return IG
+
+  def DT_split(self, root, path, X):
+    #print X
+    #stop condition
+    cutoff = 3
+    if len(X) == 0:
+      #print "here"
+      return
+    if len(X) <= cutoff:
+      if path == "left":
+        root.left = self.addLeafNode(map(lambda row:row[len(row) - 1], X))
+      else:
+        root.right = self.addLeafNode(map(lambda row:row[len(row) - 1], X))
+      #print "Here here"
+      return
+
+    # for every feature
+    #last column is labels
+    best_IG = -9999
+    best_v = -9999
+    best_f = -9999
+    best_split = -9999
+    for feature_num in range(0, len(X[0]) - 1):
+      X = sorted(X, key=lambda row: row[feature_num])
+      prev_val = -9999.0
+      cur_row = 0
+      # for every split
+      for value in map(lambda row:row[feature_num], X):
+        if prev_val == -9999.0:
+          prev_val = value
+          cur_row += 1
+          continue
+        split_value = (prev_val + value) / 2
+        #calculate entropy
+        IG = self.calculate_ig(X, cur_row)
+        # update best split if better entropy
+        if IG > best_IG:
+          best_v = split_value
+          best_split = cur_row
+          best_IG = IG
+          best_f = feature_num
+        cur_row += 1
+    #save best split in a PredicateNode
+    #something wrong below...
+    # need to change root and not make new node
+    if best_IG == 0:
+      #dont split
+      if path == "left":
+        root.left = self.addLeafNode(map(lambda row:row[len(row) - 1], X))
+      elif path == "right":
+        root.right = self.addLeafNode(map(lambda row:row[len(row) - 1], X))
+      else:
+        print "Tree cannot have only 1 node"
+      return
+    print best_IG,best_f,best_v
+    if path == "left":
+      root.left = self.addPredNode(best_f, best_split)
+      root = root.left
+    elif path == "right":
+      root.right = self.addPredNode(best_f, best_split)
+      root = root.right
+    else:
+      #print "Here"
+      root.feature_id = best_f
+      root.condition = best_v
+    print "lft   -", X[0:best_split]
+    print "right -", X[best_split:]
+    #root.left = self.DT_split(root.left, X[0:best_split])
+    #root.right = self.DT_split(root.right, X[best_split:])
+    self.DT_split(root, "left", X[0:best_split])
+    self.DT_split(root, "right", X[best_split:])
+
+  def printTree(self, root):
+    # prints the tree path
+    if root == None:
+      pass
+    else:
+      self.printTree(root.left)
+      if isinstance(root, LeafNode):
+        print "leaf - ",root.data
+      else:
+        print "pred - ",root.feature_id,root.condition
+      self.printTree(root.right)
+
+  def lookup(self, root, target):
+    # looks for a value into the tree
+    if root == None:
+      return 0
+    else:
+      # if it has found it...
+      if target == root.data:
+        return 1
+      else:
+        if target < root.data:
+          # left side
+          return self.lookup(root.left, target)
+        else:
+          # right side
+          return self.lookup(root.right, target)
+
+
+tr = Tree()
+root = tr.addPredNode(-1,-1)
+filename = "training"
+features = readfile(filename)
+tr.DT_split(root, "start", features)
+tr.printTree(root)
