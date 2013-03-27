@@ -183,14 +183,16 @@ for folder in args:
 	length = len(folds)
 	
 	uniq_labels = set(map(lambda row: row[-1], Full))
-	#test_index = 0
+	test_index = 0
 	output = {}
+	itr = 0
 	while test_index >= 0:
+		itr += 1
 		output[test_index] = {}
 		#print "test run - ",test_index
 		orig_train_set = [item for sublist in folds[0:test_index]+folds[test_index+1:length] for item in sublist]
-		#growth_rate = 1.0 * len(orig_train_set) / 100
-		growth_rate = 1
+		growth_rate = 1.0 * len(orig_train_set) / 100
+		#growth_rate = 1
 		Test = folds[test_index]
 		#print "Fold - ", length - test_index
 		for c in [5]:
@@ -279,7 +281,7 @@ for folder in args:
 			if average['key'] == []:
 				average['key'] = sorted(output[fold][run].keys())
 			#print len(output[fold][run])
-			sorted_values = map(lambda row:float(row[1])/fold_num, sorted(output[fold][run].iteritems(), key=operator.itemgetter(0)))
+			sorted_values = map(lambda row:float(row[1])/itr, sorted(output[fold][run].iteritems(), key=operator.itemgetter(0)))
 			if average[run] == []:
 				average[run] = sorted_values
 			else:
@@ -288,6 +290,7 @@ for folder in args:
 				elif len(sorted_values) > len(average[run]):
 					sorted_values = sorted_values[:-1]
 				average[run] = map(lambda a,b:a+b, sorted_values, average[run])
+	print "%Growth\tRandom\tActive"
 	for i in range(len(average['best'])):
 		print "%.2f" % average['key'][i], "\t%.2f" % average['random'][i], "\t%.2f" % average['best'][i]
 

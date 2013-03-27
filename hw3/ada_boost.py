@@ -156,13 +156,17 @@ for folder in sys.argv[1:]:
 	
 	uniq_labels = set(map(lambda row: row[-1], Full))
 	output = {}
+	test_index = 0
+	itr = 0
 	while test_index >= 0:
+		itr += 1
 		#print "test run - ",test_index
 		train_set = [item for sublist in folds[0:test_index]+folds[test_index+1:length] for item in sublist]
 		Test = folds[test_index]
 		#print "Fold - ", length - test_index
 
-		for c in [5, 10, 15, 20, 30, 50, 80]:
+		#for c in [5, 10, 15, 20, 30, 50, 80]:
+		for c in [5, 20, 80]:
 			orig_X = random_choice(train_set, c) 
 			#print len(X)
 			#print len(Test)
@@ -221,5 +225,5 @@ for folder in sys.argv[1:]:
 
 	print "c\taverage\tmax"
 	for c in sorted(output.keys()):
-		print c, "\t%.2f" % (output[c]['total'] / fol_num), "\t%.2f" % output[c]['maxi']
+		print c, "\t%.2f" % (output[c]['total'] / itr), "\t%.2f" % output[c]['maxi']
 
