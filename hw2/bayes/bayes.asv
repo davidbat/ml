@@ -1,0 +1,3 @@
+fid = fopen('spamset');
+Arr = fscanf(fid, '%f');
+disp(Arr);
