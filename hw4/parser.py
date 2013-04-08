@@ -56,12 +56,12 @@ def hash_dot_product(h1, h2):
 	if len(h1) > len(h2):
 		h1, h2 = h2, h1
 	# We minus 1 here because we do h[]
-	return sum(map(lambda k1:h1[k1] * h2[k1] if k1 in h2 else 0.0, h1)) - h1['y'] * h2['y']
+	return sum(map(lambda k1:h1[k1] * h2[k1] if k1 in h2 else 0.0, list(set(h1) - set(['y']))))
 
 
 def dot_product_hash_hash(hash1, hash2):
 	''' xi * xj * yi * yj'''
-	return hash1['y'] * hash2['y'] * hash_dot_product(hash1, hash2)
+	return hash_dot_product(hash1, hash2)
 
 def dot_prod_matrix(hashes):
 	length = len(hashes)
@@ -110,10 +110,20 @@ def calculate_b(hashes, wt, alphas, num_features = 784):
 		non_zero += 1
 	return summation / non_zero
 
+def dot_prod_with_y(dot_prod_x, hashes):
+	y = [ item['y'] for item in hashes ]
+	length = len(hashes)
+	for i in range(length):
+		#print i
+		for j in range(i,length):
+			tmp_val = dot_prod_x[i][j] * y[i] * y[j]
+			dot_prod_x[i][j] = tmp_val
+			dot_prod_x[j][i] = tmp_val
+	return dot_prod_x
 
-def one_vs_all(hashes, dot_prod):	
+def one_vs_all(hashes, dot_prod_x):	
 	print "Computing dot_prod_matrix"
-	full_mat = 
+	full_mat = dot_prod_with_y(dot_prod_x, hashes)
 	#print full_mat
 
 	P = matrix(full_mat)
@@ -159,6 +169,7 @@ def iterator(train_fn, test_fn):
 	hashes = ReadFile_hash(train_fn, jumps)
 	wt = {}
 	b = {}
+	print "Computing prod of x's"
 	dot_prod_x = dot_prod_matrix(hashes)
 	for label in range(1,11):
 		print "Calculations for label - ", label-1
@@ -166,7 +177,7 @@ def iterator(train_fn, test_fn):
 		for item in labeled_hashes:
 			item['y'] = 1.0 if item['y'] == label else -1.0
 
-		alphas = one_vs_all(labeled_hashes)
+		alphas = one_vs_all(labeled_hashes, deepcopy(dot_prod_x))
 		alphas = numpy.squeeze(numpy.asarray(alphas))
 		wt[label] = calculate_w(labeled_hashes, alphas)
 		b[label] = calculate_b(labeled_hashes, wt[label], alphas)
