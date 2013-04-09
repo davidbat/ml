@@ -171,6 +171,7 @@ def calculate_err(wt,b,test_hashes):
 		mx_label = -1
 		for label in range(my_index_lower, my_index_upper):
 			cur_pred = dot_product_list_hash(wt[label],test_hashes[indx]) + b[label]
+			print cur_pred
 			if cur_pred > mx:
 				#if test_hashes[indx]['y'] != 1:
 				#	err += 1
