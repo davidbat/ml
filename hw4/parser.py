@@ -158,6 +158,7 @@ def one_vs_all(hashes, dot_prod_x):
 def calculate_err(wt,b,test_hashes):
 	print "Calculating error rate"
 	err = [ 0 for item in range(10) ]
+	cerr = [ 0 for item in range(10) ]
 	my_index = 0
 	my_index_lower = my_index
 	my_index_upper = my_index + 1
@@ -166,12 +167,17 @@ def calculate_err(wt,b,test_hashes):
 		my_index_upper = 11
 	for indx in range(len(test_hashes)):
 		mx = 0
+		cmx = 0
 		if my_index == 0:
 			mx = -999999999
+			cmx = -999999999
 		mx_label = -1
+		cmx_label = -1
 		for label in range(my_index_lower, my_index_upper):
 			cur_pred = dot_product_list_hash(wt[label],test_hashes[indx]) + b[label]
-			print cur_pred
+			if cur_pred / abs(b[label]) > cmx:
+				cmx = cur_pred / abs(b[label])
+				cmx_label = label
 			if cur_pred > mx:
 				#if test_hashes[indx]['y'] != 1:
 				#	err += 1
@@ -180,20 +186,28 @@ def calculate_err(wt,b,test_hashes):
 			#else:
 			#	if test_hashes[indx]['y'] == 1:
 			#		err += 1
+		#print test_hashes[indx]['y'], mx_label, mx, cmx_label, cmx
 		if my_index == 0 and  test_hashes[indx]['y'] != mx_label:
 			err[int(test_hashes[indx]['y']) - 1] += 1
+		if my_index == 0 and  test_hashes[indx]['y'] != cmx_label:
+			cerr[int(test_hashes[indx]['y']) - 1] += 1
+			
 		#if my_index != 0 and ((test_hashes[indx]['y'] == my_index_lower and mx_label == -1) or\
 		#	 (test_hashes[indx]['y'] != my_index_lower and mx_label != -1)):
 		#	err[int(test_hashes[indx]['y']) - 1] += 1
-	print err
-	return sum(err)
+	print "Error -", err
+	print "Claibrated error -", cerr
+	return sum(err), sum(cerr)
 
 
-def iterator(train_fn, test_fn, jumps):
+def iterator(train_fn, test_fn, jumps, test_jumps):
 	jumps = jumps
-	test_jumps = 100
+	#test_jumps = 100
 	num_features = 784
 	hashes = ReadFile_hash(train_fn, jumps)
+	tmp_labels = map(lambda row:row['y'], hashes)
+	print map(lambda row:[row-1, tmp_labels.count(row)], set(tmp_labels))
+
 	wt = {}
 	b = {}
 	print "Computing prod of x's"
@@ -208,17 +222,21 @@ def iterator(train_fn, test_fn, jumps):
 		alphas = numpy.squeeze(numpy.asarray(alphas))
 		wt[label] = calculate_w(labeled_hashes, alphas)
 		b[label] = calculate_b(labeled_hashes, wt[label], alphas)
+	print b
 	test_hashes = ReadFile_hash(test_fn, test_jumps)
-	err = calculate_err(wt, b, test_hashes)
+	err, cerr = calculate_err(wt, b, test_hashes)
 	print err, " predicted wrong out of", len(test_hashes), ". %Err = ", err/float(len(test_hashes))*100
+	print cerr, " predicted wrong out of", len(test_hashes), ". %Err = ", cerr/float(len(test_hashes))*100
 
 if __name__ == "__main__":
 	train_fn = "./data/svmLightTrainingData.txt"
 	test_fn = "./data/svmLightTestingData.txt"
 	num_features=784
 	jumps = int(sys.argv[1])
-	test_jumps = 5
-	iterator(train_fn, test_fn, jumps)
+	test_jumps = 10
+	if len(sys.argv) == 3:
+		test_jumps = int(sys.argv[2])
+	iterator(train_fn, test_fn, jumps, test_jumps)
 	'''
 	label = 1
 	hashes = ReadFile_hash(train_fn, num_features, label, jumps)
