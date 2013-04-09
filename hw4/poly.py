@@ -51,19 +51,14 @@ def ReadFile_hash(fn, jumps):
 def dot_prod_list(l1,l2):
 	return sum(map(lambda x1,x2: x1 * x2,l1,l2))
 
-
-def hash_dot_product(h1, h2):
+def dot_product_hash_hash(h1, h2):
+	''' xi * xj * yi * yj'''
 	mh1 = h1
 	mh2 = h2
 	if len(h1) > len(h2):
 		mh1, mh2 = h2, h1
 	# We minus 1 here because we do h[]
 	return sum(map(lambda k1:mh1[k1] * mh2[k1] if k1 in mh2 else 0.0, list(set(mh1) - set(['y']))))
-
-
-def dot_product_hash_hash(hash1, hash2):
-	''' xi * xj * yi * yj'''
-	return hash_dot_product(hash1, hash2)
 
 def linear_kernel(hashes):
 	length = len(hashes)
@@ -78,7 +73,7 @@ def linear_kernel(hashes):
 	return full_mat
 
 
-def poly_kernel(hashes, d=3, c=0.1):
+def poly_kernel(hashes, d=2, c=0.1):
 	length = len(hashes)
 	#print length
 	full_mat = [[0.0 for i in range(length)] for j in range(length)]
@@ -155,7 +150,14 @@ def one_vs_all(hashes, dot_prod_x):
 		matrix([1.0 for item in range(len(hashes))]))
 	return alphas
 
-def calculate_err(wt,b,test_hashes):
+
+def apply_poly_kernel(hashes, test_hashes, alphas, d, c):
+	summation = 0.0
+	for indx in range(len(hashes)):
+		summation += pow(dot_product_hash_hash(hashes[indx], test_hashes) +c, d) * alphas[indx]
+	return summation
+
+def calculate_err(alphas, d, c,test_hashes, hashes):
 	print "Calculating error rate"
 	err = [ 0 for item in range(10) ]
 	my_index = 0
@@ -170,7 +172,7 @@ def calculate_err(wt,b,test_hashes):
 			mx = -999999999
 		mx_label = -1
 		for label in range(my_index_lower, my_index_upper):
-			cur_pred = dot_product_list_hash(wt[label],test_hashes[indx]) + b[label]
+			cur_pred = apply_poly_kernel(hashes,test_hashes[indx], alphas, d, c)
 			if cur_pred > mx:
 				#if test_hashes[indx]['y'] != 1:
 				#	err += 1
@@ -192,11 +194,13 @@ def iterator(train_fn, test_fn, jumps):
 	jumps = jumps
 	test_jumps = 100
 	num_features = 784
+	c = 0.1
+	d = 2
 	hashes = ReadFile_hash(train_fn, jumps)
 	wt = {}
 	b = {}
 	print "Computing prod of x's"
-	dot_prod_x = linear_kernel(hashes)
+	dot_prod_x = poly_kernel(hashes, d, c)
 	for label in range(1,11):
 		print "Calculations for label - ", label-1
 		labeled_hashes = deepcopy(hashes)
@@ -205,10 +209,8 @@ def iterator(train_fn, test_fn, jumps):
 
 		alphas = one_vs_all(labeled_hashes, deepcopy(dot_prod_x))
 		alphas = numpy.squeeze(numpy.asarray(alphas))
-		wt[label] = calculate_w(labeled_hashes, alphas)
-		b[label] = calculate_b(labeled_hashes, wt[label], alphas)
 	test_hashes = ReadFile_hash(test_fn, test_jumps)
-	err = calculate_err(wt, b, test_hashes)
+	err = calculate_err(alphas, d, c, test_hashes, hashes)
 	print err, " predicted wrong out of", len(test_hashes), ". %Err = ", err/float(len(test_hashes))*100
 
 if __name__ == "__main__":
