@@ -81,7 +81,7 @@ def poly_kernel(hashes, d=2, c=0.1):
 		#print i
 		for j in range(i,length):
 			tmp_val = pow(dot_product_hash_hash(hashes[i],hashes[j]) + c, d)
-			print tmp_val
+			#print tmp_val
 			full_mat[i][j] = tmp_val
 			full_mat[j][i] = tmp_val
 	return full_mat
@@ -143,17 +143,30 @@ def one_vs_all(hashes, dot_prod_x):
 	return alphas
 
 
-def apply_poly_kernel(hashes, test_hashes, alphas, d, c, cur_label, b=0):
+def apply_poly_kernel(hashes, test_hashes, alphas, d, c, cur_label, b=0.0):
 	summation = 0.0
 	for indx in range(len(hashes)):
 		y = 1.0 if hashes[indx]['y'] == cur_label else -1.0
-		summation += pow(dot_product_hash_hash(hashes[indx], test_hashes) +c, d) * y * alphas[indx] - b
+		tmp_val = pow(dot_product_hash_hash(hashes[indx], test_hashes) +c, d) * y * alphas[indx] + b
+		if b != 0.0:
+			print "Inside poly [", indx,"] - ", tmp_val, y, cur_label, hashes[indx]['y'], test_hashes['y']
+		summation += tmp_val
+	return summation
+
+def apply_poly_kernel_vote(hashes, test_hashes, alphas, d, c, cur_label, b=0.0):
+	summation = 0.0
+	for indx in range(len(hashes)):
+		y = 1.0 if hashes[indx]['y'] == cur_label else -1.0
+		if pow(dot_product_hash_hash(hashes[indx], test_hashes) +c, d) * y * alphas[indx] + b > 0 and\
+			y == 1:
+			summation += 1
+		#if b != 0.0:
+		#	print "Inside poly [", indx,"] - ", tmp_val, y, test_hashes['y']
 	return summation
 
 def calculate_err(alphas, d, c,test_hashes, hashes, b):
 	print "Calculating error rate"
 	err = [ 0 for item in range(10) ]
-	my_index = 3
 	my_index_lower = my_index
 	my_index_upper = my_index + 1
 	if my_index == 0:
@@ -165,8 +178,8 @@ def calculate_err(alphas, d, c,test_hashes, hashes, b):
 			mx = -999999999
 		mx_label = -1
 		for label in range(my_index_lower, my_index_upper):
-			cur_pred = apply_poly_kernel(hashes,test_hashes[indx], alphas, d, c, label, b[label])
-			print cur_pred
+			cur_pred = apply_poly_kernel(hashes,test_hashes[indx], alphas[label], d, c, label, b[label])
+			print cur_pred, label, test_hashes[indx]['y']
 			if cur_pred > mx:
 				#if test_hashes[indx]['y'] != 1:
 				#	err += 1
@@ -175,8 +188,9 @@ def calculate_err(alphas, d, c,test_hashes, hashes, b):
 			#else:
 			#	if test_hashes[indx]['y'] == 1:
 			#		err += 1
-		#if my_index == 0 and  test_hashes[indx]['y'] != mx_label:
-		#	err[int(test_hashes[indx]['y']) - 1] += 1
+		print "pred -", mx, mx_label, test_hashes[indx]['y']
+		if my_index == 0 and test_hashes[indx]['y'] != mx_label:
+			err[int(test_hashes[indx]['y']) - 1] += 1
 		if my_index != 0 and ((test_hashes[indx]['y'] == my_index_lower and mx_label == -1) or\
 			 (test_hashes[indx]['y'] != my_index_lower and mx_label != -1)):
 			err[int(test_hashes[indx]['y']) - 1] += 1
@@ -191,32 +205,40 @@ def calculate_b(hashes, alphas, d, c, num_features = 784):
 	for indx in range(len(hashes)):
 		if alphas[indx] == 0.0:
 			continue
-		summation += - apply_poly_kernel(hashes, hashes[indx], alphas, d, c, 1.0) + hashes[indx]['y']
+		tmp_val = apply_poly_kernel(hashes, hashes[indx], alphas, d, c, 1.0)
+		#print tmp_val, hashes[indx]['y']
+		summation += - tmp_val + hashes[indx]['y']
 		non_zero += 1
+	print "b=", summation / non_zero
 	return summation / non_zero
 
-def iterator(train_fn, test_fn, jumps):
+def iterator(train_fn, test_fn, jumps, test_jumps):
 	jumps = jumps
-	test_jumps = 100
 	num_features = 784
 	c = 0.1
 	d = 2
 	hashes = ReadFile_hash(train_fn, jumps)
-	wt = {}
+	alphas = {}
 	b = {}
 	print "Computing prod of x's"
 	dot_prod_x = poly_kernel(hashes, d, c)
-	for label in range(1,11):
+	my_index_lower = my_index
+	my_index_upper = my_index + 1
+	if my_index == 0:
+		my_index_lower = 1
+		my_index_upper = 11
+	for label in range(my_index_lower,my_index_upper):
 		print "Calculations for label - ", label-1
 		labeled_hashes = deepcopy(hashes)
 		for item in labeled_hashes:
 			item['y'] = 1.0 if item['y'] == label else -1.0
 
-		alphas = one_vs_all(labeled_hashes, deepcopy(dot_prod_x))
-		alphas = numpy.squeeze(numpy.asarray(alphas))
+		alphas[label] = one_vs_all(labeled_hashes, deepcopy(dot_prod_x))
+		alphas[label] = numpy.squeeze(numpy.asarray(alphas[label]))
 		#alphas = map(lambda row:0.0 if row < 0 else row, alphas)
-		b[label] = calculate_b(hashes, alphas, d, c)
+		b[label] = calculate_b(labeled_hashes, alphas[label], d, c)
 	test_hashes = ReadFile_hash(test_fn, test_jumps)
+	print b
 	err = calculate_err(alphas, d, c, test_hashes, hashes, b)
 	print err, " predicted wrong out of", len(test_hashes), ". %Err = ", err/float(len(test_hashes))*100
 
@@ -225,8 +247,13 @@ if __name__ == "__main__":
 	test_fn = "./data/svmLightTestingData.txt"
 	num_features=784
 	jumps = int(sys.argv[1])
-	test_jumps = 5
-	iterator(train_fn, test_fn, jumps)
+
+
+	my_index = 1
+	test_jumps = 50
+	if len(sys.argv) == 3:
+		test_jumps = int(sys.argv[2])
+	iterator(train_fn, test_fn, jumps, test_jumps)
 	'''
 	label = 1
 	hashes = ReadFile_hash(train_fn, num_features, label, jumps)
