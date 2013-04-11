@@ -156,7 +156,7 @@ for folder in sys.argv[1:]:
 	
 	uniq_labels = set(map(lambda row: row[-1], Full))
 	output = {}
-	test_index = 0
+	#test_index = 0
 	itr = 0
 	while test_index >= 0:
 		itr += 1
