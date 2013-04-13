@@ -196,7 +196,7 @@ def calculate_err(wt,b,test_hashes):
 		#	 (test_hashes[indx]['y'] != my_index_lower and mx_label != -1)):
 		#	err[int(test_hashes[indx]['y']) - 1] += 1
 	print "Error -", err
-	print "Claibrated error -", cerr
+	#print "Claibrated error -", cerr
 	return sum(err), sum(cerr)
 
 
@@ -226,7 +226,7 @@ def iterator(train_fn, test_fn, jumps, test_jumps):
 	test_hashes = ReadFile_hash(test_fn, test_jumps)
 	err, cerr = calculate_err(wt, b, test_hashes)
 	print err, " predicted wrong out of", len(test_hashes), ". %Err = ", err/float(len(test_hashes))*100
-	print cerr, " predicted wrong out of", len(test_hashes), ". %Err = ", cerr/float(len(test_hashes))*100
+	#print cerr, " predicted wrong out of", len(test_hashes), ". %Err = ", cerr/float(len(test_hashes))*100
 
 if __name__ == "__main__":
 	train_fn = "./data/svmLightTrainingData.txt"
