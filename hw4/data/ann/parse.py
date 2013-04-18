@@ -23,7 +23,7 @@ for lines in fd.readlines():
   lines = lines.strip().split()
   if ec[lines[0]] == []:
     print "here"
-  fo.write(" ".join(ec[lines[0]]) + "\n")
+  fo.write(lines[0] + "\n")
   fi.write(" ".join(lines[1:]) + "\n")
 fi.close()
 fd.close()
