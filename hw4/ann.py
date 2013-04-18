@@ -6,9 +6,6 @@ import random
 import math
 import sys
 
-
-
-
 def ReadFile(fn, jumps=1):
 	arr = []
 	i = -1
@@ -33,18 +30,17 @@ def ReadFile_hash(fn, jumps):
 		#print i
 		tmp_hash = {}
 		line = line.split()
-		tmp_hash['y'] = float(line[0])
 		for item in line [1:]:
 			item = item.split(":")
 			# keys are ints and values are floats
-			tmp_hash[int(item[0])] = float(item[1])
+			tmp_hash[int(item[0])-1] = float(item[1])
 		hashes.append(tmp_hash)
 	print "Finished reading the data"
 	return hashes
 
 def sigmoid(x):
-	if x <= -650:
-		return 1.956199921370272e+10
+	if x <= -100:
+		return 1.0 / 2.6881171418161356e+43
 	return (1.0 / (1.0 + math.exp(-x)))
 
 def initializeW(R, C):
@@ -57,14 +53,27 @@ def sum_mult(A, B):
 		exit(1)
 	return sum(map(lambda i,j:i*j, A, B))	
 
-def calculate_sig(X, W, BIAS):
+def hash_sum_mult(A, B):
+	summation = 0.0
+	for key in A:
+		summation += A[key] * B[key]
+	return summation
+
+def calculate_sig_hash_list(X, W, BIAS):
 	O = []
 	# for j in every hidden_node
+	for j in range(len(W)):
+		s = hash_sum_mult(X, W[j])
+		O.append(sigmoid(s + BIAS[j]))
+	return O
+
+def calculate_sig(X, W, BIAS):
+	O = []
+	# for j in every output node
 	for j in range(0, len(W)):
 		s = sum_mult(X, W[j])
 		O.append(sigmoid(s + BIAS[j]))
 	return O
-
 
 def network_error(current_op, expected_op):
 	if len(current_op) != len(expected_op):
@@ -77,17 +86,17 @@ def network_error(current_op, expected_op):
 
 def hidden_error(HO, NE, W):
 	Hidden_Err = []
+	# for every hidden node
 	for h in range(0, len(HO)):
-		net_err = 0
+		net_err = 0.0
 		for k in range(0, len(NE)):
-			net_err += W[k][h] * NE[k] 
-		#print "Hidden - ", h+1, "net err - ", net_err
-		#print  HO[h] * (1 - HO[h]) * net_err
+			net_err += W[k][h] * NE[k]
 		Hidden_Err.append(HO[h] * (1 - HO[h]) * net_err)
 	return Hidden_Err
 
 #stateful function
 def update_W(W, Err, X, delta_W, BIAS):
+	#print learning_rate
 	R = len(W)
 	C = len(W[0])
 	for r in range(0, R):
@@ -95,16 +104,22 @@ def update_W(W, Err, X, delta_W, BIAS):
 			W[r][c] += learning_rate * Err[r]	* X[c] + momentum * delta_W[r][c]
 		BIAS[r] += learning_rate * Err[r]
 
-trip = ReadFile("./data/ann/train_ip.txt", 300)
-trop = ReadFile("./data/ann/train_op.txt", 300)
-tstip = ReadFile("./data/ann/test_ip.txt", 100)
-tstop = ReadFile("./data/ann/test_op.txt", 100)
-ecoc = open("./data/ann/ecoc.txt").readlines()
-ec = {}
-for line in ecoc:
-  line = line.strip().split()
-  ec[line[0]] = line[1:]
-
+def update_W_hash(W, Err, X, delta_W, BIAS):
+	R = len(W)
+	C = len(W[0])
+	# for each hidden node
+	for r in range(0, R):
+		#for c in range(0, C):
+		for c in X.keys():
+			#learned_val = 0.0
+			#if c in X.keys():
+				learned_val = learning_rate * Err[r] * X[c]
+				#print learning_rate, Err[r], X[c], learned_val
+				W[r][c] += learned_val + momentum * delta_W[r][c]
+			#else:
+			#	print X.keys(), "here"
+			#W[r][c] += learned_val + momentum * delta_W[r][c]
+		BIAS[r] += learning_rate * Err[r]
 
 def hamdist(lst1, lst2):
 	"""Count the # of differences between equal length strings str1 and str2"""
@@ -125,36 +140,53 @@ def nearest(op):
 			min_dist = hamdist(op, ec[key])
 	return min_key, min_dist
 
-
-
 conv_err = 0.001
 momentum = 0.5
 #output_err = 0.2
-hidden_nodes = 300
+hidden_nodes = 400
 #learning_rate = 0.3
 itr = 0
 
+trip = ReadFile_hash("./data/ann/train_s_ip.txt", 75)
+trop = ReadFile("./data/ann/train_s_op.txt", 75)
+print len(trip), len(trop)
+tstip = ReadFile_hash("./data/ann/test_s_ip.txt", 100)
+tstop = ReadFile("./data/ann/test_s_op.txt", 100)
+ecoc = open("./data/ann/ecoc.txt").readlines()
+ec = {}
+for line in ecoc:
+  line = line.strip().split()
+  ec[line[0]] = line[1:]
+
+
 feature_num = len(trip[0])
+feature_num = 784
 output_num = len(trop[0])
 print feature_num, output_num
 BIAS_H = [random.uniform(-0.1, 0.1) for x in range(hidden_nodes)]
 BIAS_O = [random.uniform(-0.1, 0.1) for x in range(output_num)] 
 W_I_H = initializeW(hidden_nodes, feature_num) # 3 by 8 i.e. 3 arrays with 8 vals each
 W_H_O = initializeW(output_num, hidden_nodes) # 8 by 3 i.e. 8 arrays with 3 vals each
-
+assert len(W_I_H) == hidden_nodes
+assert len(W_I_H[0]) == feature_num
+assert len(W_H_O) == output_num
+assert len(W_H_O[0]) == hidden_nodes
 
 def check_diff(trop, trip, W_I_H, W_H_O, BIAS_H, BIAS_O):
 	for t in range(0, len(trip)):
-		Hidden_Out = calculate_sig(trip[t], W_I_H, BIAS_H)
+		Hidden_Out = calculate_sig_hash_list(trip[t], W_I_H, BIAS_H)
 		Output_Out = calculate_sig(Hidden_Out, W_H_O, BIAS_O)
 		for j in range(0, len(Output_Out)):
 			if abs(Output_Out[j] - trop[t][j]) > output_err:
 				return False
 	return True
 
+def mean(lst):
+	return float(sum(lst))/len(lst)
+
 
 def calculate_mse(actual, current):
-	return sum(map(lambda i,j:i - j, actual, current)) ** 2
+	return mean(map(lambda i,j:abs(i - j), actual, current))
 
 def my_sub(A, B):
 	delta = [[0.0 for x in range(len(A[0]))] for y in range(len(A))]
@@ -165,40 +197,66 @@ def my_sub(A, B):
 
 
 delta_W_I_H = [[0.0 for x in range(feature_num)] for y in range(hidden_nodes)]
-delta_W_H_O = [[0.0 for x in range(hidden_nodes)] for y in range(feature_num)]
+delta_W_H_O = [[0.0 for x in range(hidden_nodes)] for y in range(output_num)]
+
+
+def write_out(lst, fn):
+	fd = open(fn, "w")
+	for each in lst:
+		if type(each) == type([]):
+			fd.write(" ".join(map(lambda row:str(row), each)) + "\n")
+		else:
+			fd.write(str(each) + "\n")
+	fd.close()
+
 
 cnt = 0
 cond = True
 prev_mse = 999999999
 while cond:
-	learning_rate = random.uniform(0,0.5)
-	mse = 0
+	learning_rate = random.uniform(0,0.005)
+	err = 0
 	prev_W_I_H = list(W_I_H)
 	prev_W_H_O = list(W_H_O)
+	# for each data point
 	for t in range(0, len(trip)):
-		Hidden_Out = calculate_sig(trip[t], W_I_H, BIAS_H) 
+		#print "Hidden Out"
+		Hidden_Out = calculate_sig_hash_list(trip[t], W_I_H, BIAS_H) 
 		#print "HO - ", Hidden_Out
+		#print "Output"
 		Output_Out = calculate_sig(Hidden_Out, W_H_O, BIAS_O)
 		#if cnt % 10000 == 1: 
-		mse += calculate_mse(trop[t], Output_Out)
-		#print "MSE - ", mse
+		#print "err"
+		err += calculate_mse(trop[t], Output_Out)
+		#print "Net err"
 		Net_Err = network_error(Output_Out, trop[t])
+		#print Output_Out
+		#print trop[t]
 		#print "Net_Err - ", Net_Err
+		#print "Hid err"
 		Hid_Err = hidden_error(Hidden_Out, Net_Err, W_H_O)
 		#print "Hid_Err - ", Hid_Err
+		#print "update WHO"
 		update_W(W_H_O, Net_Err, Hidden_Out, delta_W_H_O, BIAS_O)
-		update_W(W_I_H, Hid_Err, trip[t], delta_W_I_H, BIAS_H)
-	print cnt
+		#print "update WIH"
+		update_W_hash(W_I_H, Hid_Err, trip[t], delta_W_I_H, BIAS_H)
+	print err, cnt
 	delta_W_I_H = my_sub(W_I_H, prev_W_I_H)
 	delta_W_H_O = my_sub(W_H_O, prev_W_H_O)
- 
+	#print "Delta WIH\n", delta_W_I_H
+
+	write_out(W_I_H,"WIH")
+ 	write_out(W_H_O,"WHO")
+ 	write_out(BIAS_H,"BH")
+ 	write_out(BIAS_O,"BO")
+
 	cnt += 1
 	#cond = (not check_diff(trop, trip, W_I_H, W_H_O, BIAS_H, BIAS_O)) and (cnt <= 100000)
-	cond = (cnt < 100)# and (abs(mse - prev_mse) > conv_err) 
-	#cond = (abs(mse - prev_mse) > conv_err)
-	prev_mse = mse
-	if cnt % 10000 == 1 or not cond:
-		print "Iteration - ", cnt
+	cond = (cnt < 50) or err > 1# and (abs(err - prev_mse) > conv_err) 
+	#cond = (abs(err - prev_mse) > conv_err)
+	#prev_mse = mse
+	#if cnt % 10000 == 1 or not cond:
+	#	print "Iteration - ", cnt
 	
 def print_arr(lst):
 	for row in range(len(lst)):
@@ -207,7 +265,7 @@ def print_arr(lst):
 #print "Hidden Vals -"
 temp_arr = []
 for t in range(len(tstip)):
-	Hidden_Out = calculate_sig(tstip[t], W_I_H, BIAS_H) 
+	Hidden_Out = calculate_sig_hash_list(tstip[t], W_I_H, BIAS_H) 
 	#print " ".join(["%.2f" % val for val in Hidden_Out]), "\t\t\t\t\t", " ".join([str(int(round(val))) for val in Hidden_Out])
 	Output_Out = calculate_sig(Hidden_Out, W_H_O, BIAS_O)
 	#temp_arr.append(neatest(Output_Out))
