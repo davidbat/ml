@@ -1,0 +1,5 @@
+60 jumps
+all test points
+
+[58, 12, 156, 103, 84, 100, 52, 84, 134, 121]
+904  predicted wrong out of 10000 . %Err =  9.04

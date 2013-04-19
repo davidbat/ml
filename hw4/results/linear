@@ -1,0 +1,6 @@
+60 jumps
+all data
+
+Calculating error rate
+Error - [116, 19, 378, 146, 140, 191, 177, 164, 323, 148]
+1802  predicted wrong out of 10000 . %Err =  18.02
