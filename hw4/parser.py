@@ -93,15 +93,15 @@ def poly_kernel(hashes, d=3, c=0.1):
 
 def calculate_w(hashes, alphas, num_features=784):
 	wt = [ 0.0 for i in range(num_features) ]
-
 	print "Calculating W"
 	for indx in range(len(hashes)):
 		data_point = hashes[indx]
+		print data_point
 		for k in data_point:
 			if k == 'y':
 				continue
 			#print k, indx, alphas[indx] , data_point['y']
-			wt[k] += data_point[k] * alphas[indx] * data_point['y']
+			wt[k-1] += data_point[k] * alphas[indx] * data_point['y']
 	return wt
 
 def dot_product_list_hash(lst1, hash2):
