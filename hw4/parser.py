@@ -96,7 +96,7 @@ def calculate_w(hashes, alphas, num_features=784):
 	print "Calculating W"
 	for indx in range(len(hashes)):
 		data_point = hashes[indx]
-		print data_point
+		#print data_point
 		for k in data_point:
 			if k == 'y':
 				continue
@@ -109,7 +109,7 @@ def dot_product_list_hash(lst1, hash2):
 	for key in hash2:
 		if key == 'y':
 			continue
-		summation += lst1[key] * hash2[key]
+		summation += lst1[key-1] * hash2[key]
 	return summation
 
 def calculate_b(hashes, wt, alphas, num_features = 784):
@@ -222,7 +222,7 @@ def iterator(train_fn, test_fn, jumps, test_jumps):
 		alphas = numpy.squeeze(numpy.asarray(alphas))
 		wt[label] = calculate_w(labeled_hashes, alphas)
 		b[label] = calculate_b(labeled_hashes, wt[label], alphas)
-	print b
+	#print b
 	test_hashes = ReadFile_hash(test_fn, test_jumps)
 	err, cerr = calculate_err(wt, b, test_hashes)
 	print err, " predicted wrong out of", len(test_hashes), ". %Err = ", err/float(len(test_hashes))*100
