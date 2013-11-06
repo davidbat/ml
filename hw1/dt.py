@@ -14,7 +14,7 @@ def readfile(filename):
 
 class LeafNode:
   left , right, data = None, None, 0.0
-  
+
   def __init__(self, data):
     # initializes the data members
     self.left = None
@@ -23,7 +23,7 @@ class LeafNode:
 
 class PredicateNode:
   left , right, feature_id, condition = None, None, 0.0, 0.0
-  
+
   def __init__(self, ids, val):
     # initializes the data members
     self.left = None
@@ -35,7 +35,7 @@ class Tree:
   def __init__(self):
     # initializes the root member
     self.root = None
-  
+
   def addLeafNode(self, data):
     # creates a new node and returns it
     return LeafNode(data)
@@ -141,7 +141,7 @@ class Tree:
     #return (left_MSE * split_row + right_MSE * right_items_num) / items_num
     return left_MSE + right_MSE
 
-  # Merge contiguous X 
+  # Merge contiguous X
   # X must be sort on column 'col'
   def Merge(self, X, col):
     X2 = {}
@@ -184,7 +184,7 @@ class Tree:
       # Gotta do some sort of merging for same value of X
       #print X
       X2 = self.Merge(X, feature_num)
-      #print "This is X2 - \n", X2 
+      #print "This is X2 - \n", X2
       # X2 = [[feature_value, index in X] ...]
       prev_val = -9999.0
       cur_row = 0
@@ -196,7 +196,7 @@ class Tree:
         cur_row = X_index
         if prev_val == -9999.0:
           prev_val = value
-          #cur_row += 1     
+          #cur_row += 1
           continue
         split_value = (prev_val + value) / 2
         #calculate entropy
@@ -286,7 +286,6 @@ class Tree:
       cnt += 1
       #print obtained#, line[-1] , MSE
     return sums / cnt
-  
 
 def method(calculate = "entropy"):
   print "\n\nCalculating DT based on", calculate
@@ -294,7 +293,7 @@ def method(calculate = "entropy"):
   features = readfile(filename)
   tr = {}
   root = {}
-  for cutoff in [0,1,2,3,4,5]:
+  for cutoff in [1,2,3,4,5]:
     tr[cutoff] = Tree()
     root[cutoff] = tr[cutoff].addPredNode(-1,-1)
     print "Using leaf node cutoff as - ", cutoff
@@ -306,6 +305,6 @@ def method(calculate = "entropy"):
     #print "\n"
 
 if __name__ == "__main__":
-  #method("entropy")
+  method("entropy")
   #method("gini")
-  method("MSE")
+  #method("MSE")
